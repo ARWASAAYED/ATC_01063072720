@@ -1,0 +1,129 @@
+/* Animation classes for page transitions and elements */
+.fade-in {
+  animation: fadeIn 0.8s ease-in;
+}
+
+.slide-up {
+  animation: slideUp 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+/* Hover effects for cards */
+.hover-scale {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.destination-card img {
+  transition: transform 0.5s ease;
+}
+
+.destination-card:hover img {
+  transform: scale(1.05);
+}
+
+/* Keyframe animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Hero banner styles */
+.hero-banner {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-banner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%);
+  z-index: 1;
+}
+
+.hero-banner .position-absolute {
+  z-index: 2;
+}
+
+/* Button animations */
+.btn {
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Navigation styles */
+.navbar {
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-banner {
+    height: 60vh !important;
+  }
+}
+
+/* Loading animation */
+.spinner-border {
+  border-width: 0.25em;
+}
+
+/*mainlayout*/
+.logo .sm-logo {
+  display: none;
+}
+.logo .lg-logo {
+  display: inline;
+}
+.fs-4 {
+  font-size: 1.5rem;
+}
+.fs-5 {
+  font-size: 1.25rem;
+}
+.badge {
+  background-color: red;
+  color: white;
+  top: -5px;
+  right: -5px;
+}
+
+/*dashboard*/
+.desc {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+.sub-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.green {
+  color: #28a745;
+}
+.red {
+  color: #dc3545;
+}
+.title {
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+.rbc-calendar {
+  min-height: 500px;
+}
