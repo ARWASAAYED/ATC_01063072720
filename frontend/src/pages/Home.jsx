@@ -16,7 +16,7 @@ const Footer = lazy(() => import('../components/Footer'));
 const STATIC_HERO_IMAGE = 'https://images.unsplash.com/photo-1565060169187-3ceda1a2e45d';
 
 
-const BASE_URL = 'http://localhost:9881';
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:9881';
 
 
 const containerVariants = {

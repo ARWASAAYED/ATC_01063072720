@@ -98,7 +98,7 @@ const Events = () => {
         console.log('Fetch events response:', response); // Debug
 
         if (response.success) {
-          const backendUrl = 'http://localhost:9881';
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:9881';
           const formattedEvents = response.data.map(event => ({
             id: event._id,
             title: event.title,
@@ -280,7 +280,7 @@ const Events = () => {
     } catch (error) {
       const errorMessage = error.response
         ? `Error ${error.response.status}: ${error.response.data.message || error.message}`
-        : 'Network error: Please check if the backend server is running at http://localhost:9881.';
+        : 'Network error: Please check if the backend server is running.';
       setToastMessage(errorMessage);
       setToastVariant('danger');
       setShowToast(true);

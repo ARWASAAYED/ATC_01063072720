@@ -1,13 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert, Tab, Nav, ListGroup, Spinner, Modal } from 'react-bootstrap';
-import { useNavigate, Link } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaLock, FaTicketAlt, FaHistory, FaUserEdit, FaCalendar, FaMapMarkerAlt, FaSync, FaCreditCard } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
-import api from '../utils/api';
+import React, { useState, useEffect } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Form,
+  Button,
+  Alert,
+  Tab,
+  Nav,
+  ListGroup,
+  Spinner,
+  Modal,
+} from "react-bootstrap";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaTicketAlt,
+  FaHistory,
+  FaUserEdit,
+  FaCalendar,
+  FaMapMarkerAlt,
+  FaSync,
+  FaCreditCard,
+  FaMoneyBillWave,
+} from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
+import api, { paymentAPI } from "../utils/api";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, updateUserProfile, loading: authLoading, error: authError } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    updateUserProfile,
+    loading: authLoading,
+    error: authError,
+  } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [bookingError, setBookingError] = useState(null);
   const [bookingLoading, setBookingLoading] = useState(false);
@@ -16,20 +47,20 @@ const Profile = () => {
   const [paymentError, setPaymentError] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    name: "",
+    email: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
   const [formErrors, setFormErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('profile');
+  const [successMessage, setSuccessMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("profile");
 
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated && !authLoading) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [isAuthenticated, authLoading, navigate]);
 
@@ -38,23 +69,26 @@ const Profile = () => {
     setBookingLoading(true);
     setBookingError(null);
     try {
-      const response = await api.get('/bookings');
+      const response = await api.get("/bookings");
       if (response.data.success) {
         setBookings(response.data.data);
-        console.log('Bookings:', response.data.data);
+        console.log("Bookings:", response.data.data);
       } else {
-        setBookingError('Failed to load bookings: ' + (response.data.message || 'Unknown error'));
+        setBookingError(
+          "Failed to load bookings: " +
+            (response.data.message || "Unknown error"),
+        );
       }
     } catch (error) {
       const errorMessage = error.response
         ? `Error ${error.response.status}: ${error.response.data.message || error.message}`
-        : 'Network error: Please check if the backend server is running on http://localhost:9881';
+        : "Network error: Please check if the backend server is running";
       setBookingError(errorMessage);
-      console.error('Error fetching bookings:', {
+      console.error("Error fetching bookings:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: 'http://localhost:9881/api/bookings'
+        url: `${import.meta.env.VITE_API_URL || "http://localhost:9881/api"}/bookings`,
       });
     } finally {
       setBookingLoading(false);
@@ -72,21 +106,49 @@ const Profile = () => {
         setPaymentDetails(response.data.data);
         setShowPaymentModal(true);
       } else {
-        setPaymentError('Failed to load payment details: ' + (response.data.message || 'Unknown error'));
+        setPaymentError(
+          "Failed to load payment details: " +
+            (response.data.message || "Unknown error"),
+        );
       }
     } catch (error) {
       const errorMessage = error.response
         ? `Error ${error.response.status}: ${error.response.data.message || error.message}`
-        : 'Network error: Please check if the backend server is running';
+        : "Network error: Please check if the backend server is running";
       setPaymentError(errorMessage);
-      console.error('Error fetching payment details:', {
+      console.error("Error fetching payment details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        url: `http://localhost:9881/api/payments/${bookingId}`
+        url: `${import.meta.env.VITE_API_URL || "http://localhost:9881/api"}/payments/${bookingId}`,
       });
     } finally {
       setPaymentLoading(false);
+    }
+  };
+
+  // Process payment for pending bookings
+  const handlePayment = async (bookingId) => {
+    setBookingLoading(true);
+    setBookingError(null);
+    try {
+      const paymentResponse = await paymentAPI.processPayment(
+        bookingId,
+        "pm_card_visa",
+      );
+      if (paymentResponse.success) {
+        setSuccessMessage("Payment processed successfully!");
+        fetchBookings(); // refresh the list
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        setBookingError("Payment failed.");
+      }
+    } catch (error) {
+      setBookingError(
+        error.response?.data?.message || "Payment processing failed",
+      );
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -99,43 +161,47 @@ const Profile = () => {
   // Update form data when user data is loaded
   useEffect(() => {
     if (user) {
-      setFormData(prevState => ({
+      setFormData((prevState) => ({
         ...prevState,
-        name: user.name || '',
-        email: user.email || ''
+        name: user.name || "",
+        email: user.email || "",
       }));
     }
   }, [user]);
 
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.name.trim()) {
-      errors.name = 'Name is required';
+      errors.name = "Name is required";
     }
-    
+
     if (!formData.email.trim()) {
-      errors.email = 'Email is required';
+      errors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email is invalid';
+      errors.email = "Email is invalid";
     }
-    
-    if (formData.currentPassword || formData.newPassword || formData.confirmPassword) {
+
+    if (
+      formData.currentPassword ||
+      formData.newPassword ||
+      formData.confirmPassword
+    ) {
       if (!formData.currentPassword) {
-        errors.currentPassword = 'Current password is required';
+        errors.currentPassword = "Current password is required";
       }
-      
+
       if (!formData.newPassword) {
-        errors.newPassword = 'New password is required';
+        errors.newPassword = "New password is required";
       } else if (formData.newPassword.length < 6) {
-        errors.newPassword = 'Password must be at least 6 characters';
+        errors.newPassword = "Password must be at least 6 characters";
       }
-      
+
       if (formData.newPassword !== formData.confirmPassword) {
-        errors.confirmPassword = 'Passwords do not match';
+        errors.confirmPassword = "Passwords do not match";
       }
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -144,44 +210,43 @@ const Profile = () => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     try {
       const updateData = {
         name: formData.name,
-        email: formData.email
+        email: formData.email,
       };
-      
+
       if (formData.newPassword) {
         updateData.password = formData.newPassword;
         updateData.currentPassword = formData.currentPassword;
       }
-      
+
       await updateUserProfile(updateData);
-      setSuccessMessage('Profile updated successfully!');
-      
-      setFormData(prevState => ({
+      setSuccessMessage("Profile updated successfully!");
+
+      setFormData((prevState) => ({
         ...prevState,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       }));
-      
+
       setTimeout(() => {
-        setSuccessMessage('');
+        setSuccessMessage("");
       }, 3000);
-      
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
     }
   };
 
@@ -218,22 +283,47 @@ const Profile = () => {
             <Alert variant="danger">{paymentError}</Alert>
           ) : paymentDetails ? (
             <div>
-              <p><strong>Booking Status:</strong> {paymentDetails.bookingStatus}</p>
-              <p><strong>Payment Status:</strong> {paymentDetails.paymentStatus}</p>
+              <p>
+                <strong>Booking Status:</strong> {paymentDetails.bookingStatus}
+              </p>
+              <p>
+                <strong>Payment Status:</strong> {paymentDetails.paymentStatus}
+              </p>
               {paymentDetails.paymentDetails && (
                 <>
-                  <p><strong>Payment ID:</strong> {paymentDetails.paymentDetails.id}</p>
-                  <p><strong>Amount:</strong> ${(paymentDetails.paymentDetails.amount / 100).toFixed(2)} {paymentDetails.paymentDetails.currency.toUpperCase()}</p>
-                  <p><strong>Status:</strong> {paymentDetails.paymentDetails.status}</p>
-                  <p><strong>Last 4 Digits:</strong> {paymentDetails.paymentDetails.payment_method_details?.card?.last4 || 'N/A'}</p>
-                  <p><strong>Payment Date:</strong> {new Date(paymentDetails.paymentDetails.created * 1000).toLocaleString()}</p>
+                  <p>
+                    <strong>Payment ID:</strong>{" "}
+                    {paymentDetails.paymentDetails.id}
+                  </p>
+                  <p>
+                    <strong>Amount:</strong> $
+                    {(paymentDetails.paymentDetails.amount / 100).toFixed(2)}{" "}
+                    {paymentDetails.paymentDetails.currency.toUpperCase()}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    {paymentDetails.paymentDetails.status}
+                  </p>
+                  <p>
+                    <strong>Last 4 Digits:</strong>{" "}
+                    {paymentDetails.paymentDetails.payment_method_details?.card
+                      ?.last4 || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Payment Date:</strong>{" "}
+                    {new Date(
+                      paymentDetails.paymentDetails.created * 1000,
+                    ).toLocaleString()}
+                  </p>
                 </>
               )}
             </div>
           ) : null}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleClosePaymentModal}>Close</Button>
+          <Button variant="secondary" onClick={handleClosePaymentModal}>
+            Close
+          </Button>
         </Modal.Footer>
       </Modal>
 
@@ -242,14 +332,22 @@ const Profile = () => {
           <Card className="border-0 shadow-sm">
             <Card.Body className="p-4">
               <div className="text-center mb-4">
-                <div className="bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style={{ width: '100px', height: '100px' }}>
+                <div
+                  className="bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                  style={{ width: "100px", height: "100px" }}
+                >
                   <FaUser size={40} color="#6c757d" />
                 </div>
                 <h5 className="mb-1">{user.name}</h5>
                 <p className="text-muted small mb-0">{user.email}</p>
               </div>
-              
-              <Nav variant="pills" className="flex-column" activeKey={activeTab} onSelect={setActiveTab}>
+
+              <Nav
+                variant="pills"
+                className="flex-column"
+                activeKey={activeTab}
+                onSelect={setActiveTab}
+              >
                 <Nav.Item>
                   <Nav.Link eventKey="profile" className="mb-2">
                     <FaUserEdit className="me-2" /> Edit Profile
@@ -269,26 +367,26 @@ const Profile = () => {
             </Card.Body>
           </Card>
         </Col>
-        
+
         <Col lg={9} md={8}>
           <Tab.Content>
-            <Tab.Pane eventKey="profile" active={activeTab === 'profile'}>
+            <Tab.Pane eventKey="profile" active={activeTab === "profile"}>
               <Card className="border-0 shadow-sm">
                 <Card.Body className="p-4">
                   <h4 className="mb-4">Edit Profile</h4>
-                  
+
                   {authError && (
                     <Alert variant="danger" className="mb-4">
                       {authError}
                     </Alert>
                   )}
-                  
+
                   {successMessage && (
                     <Alert variant="success" className="mb-4">
                       {successMessage}
                     </Alert>
                   )}
-                  
+
                   <Form onSubmit={handleSubmit}>
                     <Form.Group className="mb-3">
                       <Form.Label>Full Name</Form.Label>
@@ -309,7 +407,7 @@ const Profile = () => {
                         </Form.Control.Feedback>
                       </div>
                     </Form.Group>
-                    
+
                     <Form.Group className="mb-3">
                       <Form.Label>Email Address</Form.Label>
                       <div className="input-group">
@@ -329,11 +427,14 @@ const Profile = () => {
                         </Form.Control.Feedback>
                       </div>
                     </Form.Group>
-                    
+
                     <hr className="my-4" />
                     <h5 className="mb-3">Change Password</h5>
-                    <p className="text-muted small mb-3">Leave these fields empty if you don't want to change your password</p>
-                    
+                    <p className="text-muted small mb-3">
+                      Leave these fields empty if you don't want to change your
+                      password
+                    </p>
+
                     <Form.Group className="mb-3">
                       <Form.Label>Current Password</Form.Label>
                       <div className="input-group">
@@ -353,7 +454,7 @@ const Profile = () => {
                         </Form.Control.Feedback>
                       </div>
                     </Form.Group>
-                    
+
                     <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
@@ -391,22 +492,22 @@ const Profile = () => {
                         </Form.Group>
                       </Col>
                     </Row>
-                    
+
                     <div className="d-grid mt-4">
                       <Button
                         variant="primary"
                         type="submit"
                         disabled={authLoading}
                       >
-                        {authLoading ? 'Updating...' : 'Update Profile'}
+                        {authLoading ? "Updating..." : "Update Profile"}
                       </Button>
                     </div>
                   </Form>
                 </Card.Body>
               </Card>
             </Tab.Pane>
-            
-            <Tab.Pane eventKey="tickets" active={activeTab === 'tickets'}>
+
+            <Tab.Pane eventKey="tickets" active={activeTab === "tickets"}>
               <Card className="border-0 shadow-sm">
                 <Card.Body className="p-4">
                   <div className="d-flex justify-content-between align-items-center mb-4">
@@ -418,10 +519,10 @@ const Profile = () => {
                       disabled={bookingLoading}
                     >
                       <FaSync className="me-2" />
-                      {bookingLoading ? 'Refreshing...' : 'Refresh'}
+                      {bookingLoading ? "Refreshing..." : "Refresh"}
                     </Button>
                   </div>
-                  
+
                   {bookingError && (
                     <Alert variant="danger" className="mb-4">
                       {bookingError}
@@ -434,71 +535,157 @@ const Profile = () => {
                       </Button>
                     </Alert>
                   )}
-                  
+
                   {bookingLoading ? (
                     <div className="text-center py-5">
-                      <Spinner animation="border" role="status" variant="primary">
+                      <Spinner
+                        animation="border"
+                        role="status"
+                        variant="primary"
+                      >
                         <span className="visually-hidden">Loading...</span>
                       </Spinner>
                       <p className="mt-3">Loading bookings...</p>
                     </div>
                   ) : bookings.length > 0 ? (
                     <ListGroup variant="flush">
-                      {bookings.map(booking => (
-                        <ListGroup.Item key={booking._id} className="px-0 py-3 border-bottom">
-                          <div className="d-flex justify-content-between align-items-center">
-                            <div>
-                              <h6 className="mb-1">
-                                {booking.event ? (
-                                  <Link to={`/event/${booking.event._id}`}>
-                                    {booking.event.title}
-                                  </Link>
-                                ) : (
-                                  <span className="text-muted">Event Unavailable</span>
-                                )}
-                              </h6>
-                              <p className="text-muted mb-0 small">
+                      {bookings.map((booking) => (
+                        <ListGroup.Item
+                          key={booking._id}
+                          className="px-0 py-4 border-bottom"
+                        >
+                          <div className="d-flex justify-content-between align-items-start gap-3">
+                            <div className="flex-grow-1">
+                              <div className="d-flex align-items-center gap-2 mb-2">
+                                <h6 className="mb-0">
+                                  {booking.event ? (
+                                    <Link to={`/event/${booking.event._id}`}>
+                                      {booking.event.title}
+                                    </Link>
+                                  ) : (
+                                    <span className="text-muted">
+                                      Event Unavailable
+                                    </span>
+                                  )}
+                                </h6>
+                                <span
+                                  className={`badge bg-${booking.bookingStatus === "confirmed" ? "success" : booking.bookingStatus === "cancelled" ? "danger" : "warning"}`}
+                                >
+                                  {booking.bookingStatus}
+                                </span>
+                              </div>
+
+                              {/* Event Details */}
+                              <p className="text-muted mb-2 small">
                                 {booking.event ? (
                                   <>
-                                    <span className="me-2">
+                                    <span className="me-3">
                                       <FaCalendar className="me-1" />
-                                      {new Date(booking.event.startDate).toLocaleDateString()}
+                                      {new Date(
+                                        booking.event.startDate,
+                                      ).toLocaleDateString()}
                                     </span>
-                                    <span className="me-2">•</span>
                                     <span>
                                       <FaMapMarkerAlt className="me-1" />
                                       {booking.event.venue ? (
-                                        <Link 
-                                          to={`/venue/${booking.event.venue?._id || ''}`}
-                                          onClick={() => console.log('Navigating to venue:', booking.event.venue?._id, booking.event.venue?.name)}
+                                        <Link
+                                          to={`/venue/${booking.event.venue?._id || ""}`}
                                         >
-                                          {booking.event.venue.name || 'Unknown Venue'}, {booking.event.venue.city || ''}
+                                          {booking.event.venue.name ||
+                                            "Unknown Venue"}
                                         </Link>
                                       ) : (
-                                        'Unknown Venue'
+                                        "Unknown Venue"
                                       )}
                                     </span>
                                   </>
                                 ) : (
                                   <span>Details unavailable</span>
                                 )}
-                                <span className="me-2">•</span>
-                                <span>
-                                  Tickets: {booking.tickets.map(t => `${t.quantity} ${t.ticketType}`).join(', ')}
-                                </span>
-                                <span className="me-2">•</span>
-                                <span>
-                                  Payment: <span className={`badge bg-${booking.paymentStatus === 'completed' ? 'success' : 'warning'}`}>
+                              </p>
+
+                              {/* Booking Reference & Date */}
+                              <div className="mb-3 small text-muted">
+                                <div>
+                                  <strong>Booking Ref:</strong>{" "}
+                                  {booking.bookingReference}
+                                </div>
+                                <div>
+                                  <strong>Booked On:</strong>{" "}
+                                  {new Date(
+                                    booking.createdAt,
+                                  ).toLocaleDateString()}
+                                </div>
+                              </div>
+
+                              {/* Tickets Details */}
+                              <div className="mb-3">
+                                <strong className="small d-block mb-2">
+                                  Tickets:
+                                </strong>
+                                {booking.tickets.map((ticket, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="ps-2 text-muted small mb-1"
+                                  >
+                                    {ticket.quantity}x {ticket.ticketType} @ $
+                                    {ticket.price.toFixed(2)} each = $
+                                    {(ticket.quantity * ticket.price).toFixed(
+                                      2,
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Amount & Payment Info */}
+                              <div className="ps-2 small">
+                                <div className="d-flex justify-content-between mb-1">
+                                  <strong>Total Amount:</strong>
+                                  <strong className="text-primary">
+                                    ${booking.totalAmount.toFixed(2)}
+                                  </strong>
+                                </div>
+                                <div className="d-flex justify-content-between mb-1">
+                                  <span className="text-muted">
+                                    Payment Status:
+                                  </span>
+                                  <span
+                                    className={`badge bg-${booking.paymentStatus === "completed" ? "success" : booking.paymentStatus === "failed" ? "danger" : "warning"}`}
+                                  >
                                     {booking.paymentStatus}
                                   </span>
-                                </span>
-                              </p>
+                                </div>
+                                <div className="d-flex justify-content-between">
+                                  <span className="text-muted">
+                                    Payment Method:
+                                  </span>
+                                  <span className="text-capitalize">
+                                    {booking.paymentMethod.replace("_", " ")}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Attendee Info */}
+                              {booking.attendeeInformation && (
+                                <div className="mt-2 pt-2 border-top small text-muted">
+                                  <strong>Attendee:</strong>{" "}
+                                  {booking.attendeeInformation.name || "N/A"}
+                                </div>
+                              )}
                             </div>
-                            <div className="d-flex gap-2">
-                              <Button 
-                                variant="outline-primary" 
+
+                            {/* Action Buttons */}
+                            <div className="d-flex flex-column gap-2">
+                              <Button
+                                variant="outline-primary"
                                 size="sm"
-                                onClick={() => console.log('View ticket:', booking._id, booking.bookingReference)}
+                                onClick={() =>
+                                  console.log(
+                                    "View ticket:",
+                                    booking._id,
+                                    booking.bookingReference,
+                                  )
+                                }
                                 disabled={!booking.event}
                               >
                                 View Ticket
@@ -507,13 +694,27 @@ const Profile = () => {
                                 <Button
                                   variant="outline-info"
                                   size="sm"
-                                  onClick={() => fetchPaymentDetails(booking._id)}
+                                  onClick={() =>
+                                    fetchPaymentDetails(booking._id)
+                                  }
                                   disabled={paymentLoading}
                                 >
                                   <FaCreditCard className="me-1" />
-                                  Payment Details
+                                  Payment
                                 </Button>
                               )}
+                              {booking.paymentStatus !== "completed" &&
+                                booking.bookingStatus !== "cancelled" && (
+                                  <Button
+                                    variant="success"
+                                    size="sm"
+                                    onClick={() => handlePayment(booking._id)}
+                                    disabled={bookingLoading}
+                                  >
+                                    <FaMoneyBillWave className="me-1" />
+                                    Pay Now
+                                  </Button>
+                                )}
                             </div>
                           </div>
                         </ListGroup.Item>
@@ -523,8 +724,13 @@ const Profile = () => {
                     <div className="text-center py-5">
                       <FaTicketAlt size={40} className="text-muted mb-3" />
                       <h5>No Tickets Found</h5>
-                      <p className="text-muted">You haven't purchased any tickets yet.</p>
-                      <Button variant="primary" onClick={() => navigate('/events')}>
+                      <p className="text-muted">
+                        You haven't purchased any tickets yet.
+                      </p>
+                      <Button
+                        variant="primary"
+                        onClick={() => navigate("/events")}
+                      >
                         Browse Events
                       </Button>
                     </div>
@@ -532,8 +738,8 @@ const Profile = () => {
                 </Card.Body>
               </Card>
             </Tab.Pane>
-            
-            <Tab.Pane eventKey="history" active={activeTab === 'history'}>
+
+            <Tab.Pane eventKey="history" active={activeTab === "history"}>
               <Card className="border-0 shadow-sm">
                 <Card.Body className="p-4">
                   <div className="d-flex justify-content-between align-items-center mb-4">
@@ -545,10 +751,10 @@ const Profile = () => {
                       disabled={bookingLoading}
                     >
                       <FaSync className="me-2" />
-                      {bookingLoading ? 'Refreshing...' : 'Refresh'}
+                      {bookingLoading ? "Refreshing..." : "Refresh"}
                     </Button>
                   </div>
-                  
+
                   {bookingError && (
                     <Alert variant="danger" className="mb-4">
                       {bookingError}
@@ -561,10 +767,14 @@ const Profile = () => {
                       </Button>
                     </Alert>
                   )}
-                  
+
                   {bookingLoading ? (
                     <div className="text-center py-5">
-                      <Spinner animation="border" role="status" variant="primary">
+                      <Spinner
+                        animation="border"
+                        role="status"
+                        variant="primary"
+                      >
                         <span className="visually-hidden">Loading...</span>
                       </Spinner>
                       <p className="mt-3">Loading bookings...</p>
@@ -586,7 +796,7 @@ const Profile = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {bookings.map(booking => (
+                          {bookings.map((booking) => (
                             <tr key={booking._id}>
                               <td>{booking.bookingReference}</td>
                               <td>
@@ -595,37 +805,57 @@ const Profile = () => {
                                     {booking.event.title}
                                   </Link>
                                 ) : (
-                                  <span className="text-muted">Event Unavailable</span>
+                                  <span className="text-muted">
+                                    Event Unavailable
+                                  </span>
                                 )}
                               </td>
                               <td>
                                 {booking.event && booking.event.venue ? (
-                                  <Link 
-                                    to={`/venue/${booking.event.venue._id || ''}`}
-                                    onClick={() => console.log('Navigating to venue:', booking.event.venue?._id, booking.event.venue?.name)}
+                                  <Link
+                                    to={`/venue/${booking.event.venue._id || ""}`}
+                                    onClick={() =>
+                                      console.log(
+                                        "Navigating to venue:",
+                                        booking.event.venue?._id,
+                                        booking.event.venue?.name,
+                                      )
+                                    }
                                   >
-                                    {booking.event.venue.name || 'Unknown Venue'}
+                                    {booking.event.venue.name ||
+                                      "Unknown Venue"}
                                   </Link>
                                 ) : (
-                                  'Unknown Venue'
+                                  "Unknown Venue"
                                 )}
                               </td>
                               <td>
-                                {booking.event ? (
-                                  new Date(booking.event.startDate).toLocaleDateString()
-                                ) : (
-                                  'N/A'
-                                )}
+                                {booking.event
+                                  ? new Date(
+                                      booking.event.startDate,
+                                    ).toLocaleDateString()
+                                  : "N/A"}
                               </td>
-                              <td>{booking.tickets.map(t => `${t.quantity} ${t.ticketType}`).join(', ')}</td>
+                              <td>
+                                {booking.tickets
+                                  .map(
+                                    (t) =>
+                                      `${t.quantity}x ${t.ticketType} @ $${t.price.toFixed(2)}`,
+                                  )
+                                  .join(", ")}
+                              </td>
                               <td>${booking.totalAmount.toFixed(2)}</td>
                               <td>
-                                <span className={`badge bg-${booking.bookingStatus === 'confirmed' ? 'success' : booking.bookingStatus === 'cancelled' ? 'danger' : 'warning'}`}>
+                                <span
+                                  className={`badge bg-${booking.bookingStatus === "confirmed" ? "success" : booking.bookingStatus === "cancelled" ? "danger" : "warning"}`}
+                                >
                                   {booking.bookingStatus}
                                 </span>
                               </td>
                               <td>
-                                <span className={`badge bg-${booking.paymentStatus === 'completed' ? 'success' : 'warning'}`}>
+                                <span
+                                  className={`badge bg-${booking.paymentStatus === "completed" ? "success" : "warning"}`}
+                                >
                                   {booking.paymentStatus}
                                 </span>
                               </td>
@@ -634,13 +864,28 @@ const Profile = () => {
                                   <Button
                                     variant="outline-info"
                                     size="sm"
-                                    onClick={() => fetchPaymentDetails(booking._id)}
+                                    onClick={() =>
+                                      fetchPaymentDetails(booking._id)
+                                    }
                                     disabled={paymentLoading}
                                   >
                                     <FaCreditCard className="me-1" />
                                     Payment Details
                                   </Button>
                                 )}
+                                {booking.paymentStatus !== "completed" &&
+                                  booking.bookingStatus !== "cancelled" && (
+                                    <Button
+                                      variant="success"
+                                      size="sm"
+                                      onClick={() => handlePayment(booking._id)}
+                                      disabled={bookingLoading}
+                                      className="ms-1"
+                                    >
+                                      <FaMoneyBillWave className="me-1" />
+                                      Pay Now
+                                    </Button>
+                                  )}
                               </td>
                             </tr>
                           ))}
@@ -651,8 +896,13 @@ const Profile = () => {
                     <div className="text-center py-5">
                       <FaHistory size={40} className="text-muted mb-3" />
                       <h5>No Booking History</h5>
-                      <p className="text-muted">You haven't made any bookings yet.</p>
-                      <Button variant="primary" onClick={() => navigate('/events')}>
+                      <p className="text-muted">
+                        You haven't made any bookings yet.
+                      </p>
+                      <Button
+                        variant="primary"
+                        onClick={() => navigate("/events")}
+                      >
                         Browse Events
                       </Button>
                     </div>

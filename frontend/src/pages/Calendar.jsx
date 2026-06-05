@@ -10,7 +10,7 @@ const Header = lazy(() => import('../components/Header'));
 const Footer = lazy(() => import('../components/Footer'));
 
 // Backend base URL
-const BASE_URL = 'http://localhost:9881';
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:9881';
 
 // Animation variants
 const containerVariants = {

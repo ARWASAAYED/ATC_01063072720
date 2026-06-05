@@ -11,7 +11,7 @@ const Header = React.lazy(() => import('../components/Header'));
 const Footer = React.lazy(() => import('../components/Footer'));
 
 
-const BACKEND_URL = 'http://localhost:9881';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:9881';
 
 // Animation variants
 const containerVariants = {

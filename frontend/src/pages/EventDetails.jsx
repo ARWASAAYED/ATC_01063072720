@@ -48,7 +48,7 @@ const EventDetails = () => {
         
         if (response.success && response.data) {
           const eventData = response.data;
-          const backendUrl = 'http://localhost:9881';
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:9881';
           const formattedEvent = {
             id: eventData._id,
             title: eventData.title || 'Untitled Event',
@@ -101,7 +101,7 @@ const EventDetails = () => {
       try {
         const response = await EventService.getEvents({ category, limit: 3 });
         console.log('Related events response:', response);
-        const backendUrl = 'http://localhost:9881';
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:9881';
         if (response.success) {
           const filteredEvents = response.data
             .filter(relEvent => relEvent._id !== id)

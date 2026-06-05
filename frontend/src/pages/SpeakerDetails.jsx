@@ -8,7 +8,7 @@ import { Tooltip, Space } from 'antd';
 import api from '../utils/api';
 
 // Backend base URL
-const BASE_URL = 'http://localhost:9881';
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:9881';
 
 const SpeakerDetails = () => {
   const { id } = useParams();
